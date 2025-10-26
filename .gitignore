@@ -1,0 +1,14 @@
+# Virtual environment (poetry)
+.venv/
+
+# сборочные файлы
+dist/
+build/
+
+# Кэш пайтона
+__pycache__/
+*.pyc
+
+# IDE служебные файлы
+.vscode/
+.idea/
