@@ -1,5 +1,3 @@
-.PHONY: install project build publish clean install-local
-
 install:
 	poetry install
 
@@ -10,11 +8,19 @@ build:
 	poetry build
 
 publish:
-	poetry publish --dry-run --build
+	poetry publish --dry-run 
 
-install-local:
+package-install:
 	python3 -m pip install dist/*.whl
 
-clean:
-	rm -rf dist build *.egg-info
-	find. -name "__pycache__" -type d -exec rm -rf {} +
+lint:
+	poetry run ruff check .
+
+
+
+
+
+
+
+
+

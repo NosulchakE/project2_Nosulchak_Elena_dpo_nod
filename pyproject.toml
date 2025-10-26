@@ -10,6 +10,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.12"
+prompt = "^0.4.1"
 
 [tool.poetry.scripts]
 project = "src.primitive_db.main:main"
@@ -19,3 +20,16 @@ project = "src.primitive_db.main:main"
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+exclude = ["venv", "/venv", "dist", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = []
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.14.2,<0.15.0)"
+]
