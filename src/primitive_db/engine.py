@@ -4,6 +4,17 @@ from .utils import load_metadata, save_metadata
 from .core import create_table, drop_table
 
 META_FILE = "db_meta.json"
+def print_help():
+    """ Выводит справочную информацию по командам."""
+    print("\n*** Процесс работы с таблицей ***")
+    print("Функции:")
+    print("<command> create_table <имя_таблицы> <столбец1:тип>... - создать таблицу")
+    print("<command> list_tables        - показать список таблиц")
+    print("<command> drop_table <имя_таблицы>        - удалить таблицу")
+    print("\nОбщие команды:")
+    print("<command> exit - выйти из программы")
+    print("<command> help - справочная информация\n")
+
 
 def run():
     """
@@ -35,13 +46,8 @@ def run():
             print("Выход из программы...")
             break
         elif command == "help":
-            print("\Доступные команды:")
-            print("<command> create_table <имя_таблицы> <колонка1: тип> <колонка2: тип>...")
-            print("<command> list_tables")
-            print("<command> drop_table <имя_таблицы>")
-            print("<command> help - справочная информация")
-            print("<command> exit\n")
-            continue
+            print_help()
+            
 
         elif command == "list_tables":
             if metadata:
