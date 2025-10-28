@@ -67,15 +67,15 @@ def insert(metadata, table_name, values, table_data):
     columns = metadata[table_name]
     non_id_columns = columns[1:]
     if len(values) != len(non_id_columns):
-        print("Ошибка: количество значений не соответствует количеству столбцов")
+        print("Ошибка: количество значений не соответствует количеству столбцов без ID")
         return table_data
 
     new_record = {}
     if table_data:
-        new_id = max(row["ID"] for row in table_data) = 1
+        new_id = max(row["ID"] for row in table_data) + 1
     else:
         new_id = 1
-    new_record[!ID"] = new_id
+    new_record["ID"] = new_id
 
     for col_def, val in zip(non_id_columns, values):
         name, col_type = col_def.split(":")
@@ -84,7 +84,7 @@ def insert(metadata, table_name, values, table_data):
                 val = int(val)
             elif col_type == "str":
                 val = str(val)
-            elif col_type == "bool"
+            elif col_type == "bool":
                 val = bool(val)
         except ValueError:
             print(f"Некорректное значение: {val} для {col_type}")
@@ -96,4 +96,34 @@ def insert(metadata, table_name, values, table_data):
     return table_data
 
 def select(table_data, where_clause=None):
+    """ Возвращает все записи, либо фильтр по where_clause"""
+    if not where_clause:
+        return table_data
+
+    result = []
+    for row in table_data:
+        if all(row.get(k) == v for k, v in where_clause.items()):
+            result.append(row)
+    return result
+
+
+def update(table_data, set_clause, where_clause=None):
+    """ Обновляет записи по where_clause"""
+    updated = []
+    for row in table_data:
+        if not where_clause or all(row.get(k) == v for k, v in where_clause.items()):
+            for k, v in set_clause.items():
+                row[k] = v
+            updated.append(row)
+    return updated
+
+def delete(table_data, where_clause):
+    """ Удаляет записи по where_clause """
+    new_data = []
+    for row in table_data:
+        if not all(row.get(k) == v for k, v in where_clause.items()):
+            new_data.append(row)
+    return new_data
+
+
 
