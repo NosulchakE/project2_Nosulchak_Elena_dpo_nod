@@ -4,6 +4,7 @@ from prettytable import PrettyTable
 from .utils import load_metadata, save_metadata, load_table_data, save_table_data
 from .core import create_table, drop_table, insert, select, update, delete
 from .parser import parse_where_clause, parse_set_clause
+from ..decorators import handle_db_errors
 
 METADATA_FILE = "db_meta.json"
 def print_help():

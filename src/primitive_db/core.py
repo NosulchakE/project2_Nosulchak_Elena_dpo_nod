@@ -1,129 +1,156 @@
 #!/usr/bin/env python3
+from ..decorators import  handle_db_errors, confirm_action, log_time, create_cacher
+from  .utils import load_table_data, save_table_data
+import os
+cache = create_cacher()
+
 VALID_TYPES = {"int", "str", "bool"}
 
+@handle_db_errors
 def create_table(metadata, table_name, columns):
     """
-    Создать таблицу.
-    :param metadata: словарь метаданных (все таблицы)
-    :param table_name: имя новой таблицы
-    :param columns: список строк вида ["name:str", "age:int"]
-    :return: обновленный metadata
+    Создать таблицу. С проверками
     """
     if table_name in metadata:
         print(f"Ошибка: таблица '{table_name}' уже существует.")
-        return metadata
-
-    has_id = False
-    cleaned_columns = []
-
+        
+   # Проверяем корректность типови формируем структуру
+    table_columns = [("ID", "int")]
     for col in columns:
-        if ":" not in col:
-            print(f"Ошибка: неправильный формат столбца '{col}'. Используйте <имя:тип>.")
-            return metadata
-
-        name, col_type = col.split(":", 1)
-        name = name.strip()
-        col_type = col_type.strip()
-
+        if ":" not in cjl:
+            raise ValueError(f"Некорректный формат столбца: {col}")
+        col_name, col_type = col.split(":", 1)
         if col_type not in VALID_TYPES:
-            print(f"Ошибка: тип '{col_type}' некорректен. Допустимо: {','.join(VALID_TYPES)}")
-            return  metadata
+            raise ValueError(f"Некорректный тип данных: {col_type}")
+        table_columns.append((col_name, col_type))
 
-        if name.lower() == "id":
-            if col_type != "int":
-                print("Ошибка: столбец должен иметь тип int")
-                return  metadata
-            has_id = True
-
-        cleaned_columns.append(f"{name}:{col_type}")
-
-    if not has_id:
-        cleaned_columns.insert(0, "ID:int")
-
-    metadata[table_name] = cleaned_columns
-    print(f"Таблица '{table_name}' создана. Колонки: {cleaned_columns}")
+    metadata[table_name] = {"columns: table_columns"}
+    print(f"Таблица '{table_name}' создана. Колонки: {table_columns}")
     return metadata
 
-
+@handle_db_errors
+@confirm_action("удаление таблицы")
 def drop_table(metadata, table_name):
     """
     Удалить таблицу
     """
     if table_name not in metadata:
-        print(f"Ошибка: таблицы '{table_name}' не существует.")
-        return metadata
+        raise KeyError(f"Ошибка: таблицы '{table_name}' не существует.")
     del metadata[table_name]
-    print(f"Таблица '{table_name}' удалена.")
+    print(f"Таблица '{table_name}'успешно удалена")
     return metadata
 
-#___CRUD___
 
-def insert(metadata, table_name, values, table_data):
+#___CRUD___
+@handle_db_errors
+@log_time
+def insert(metadata, table_name, values):
     """добавляет новую запись в таблицу"""
     if table_name not in metadata:
-        print(f"Ошибка: таблицы '{table_name}' не существует.")
-        return table_data
+        raise KeyError(f" таблицы '{table_name}' не существует.")
 
-    columns = metadata[table_name]
-    non_id_columns = columns[1:]
-    if len(values) != len(non_id_columns):
-        print("Ошибка: количество значений не соответствует количеству столбцов без ID")
-        return table_data
+    table_info = metadata[table_name]
+    columns = [col_name for col_name, _ in table_info['columns'] if col_name != "ID"]
 
-    new_record = {}
-    if table_data:
-        new_id = max(row["ID"] for row in table_data) + 1
-    else:
-        new_id = 1
-    new_record["ID"] = new_id
+    if len(values) != len(columns):
+        raise ValueError(f"Ожидается {len(columns)} значений (без ID), получено {len(values)}")
 
-    for col_def, val in zip(non_id_columns, values):
-        name, col_type = col_def.split(":")
-        try:
-            if col_type == "int":
-                val = int(val)
-            elif col_type == "str":
-                val = str(val)
-            elif col_type == "bool":
-                val = bool(val)
-        except ValueError:
-            print(f"Некорректное значение: {val} для {col_type}")
-            return table_data
-        new_record[name] = val
+    # Загружаем данные
+    table_data = load_table_data(table_name)
 
-    table_data.append(new_record)
-    print(f"Добавлена запись: {new_record}")
+    new_id = max((row["ID"] for row in table_data), default=0) +1
+
+    new_row = {"ID": new_id}
+    for (col_name, col_type), val in zip(table_info["columns"][1:], values):
+        if col_type == "int":
+            val = int(val)
+        elif col_type == "bool":
+            val = val.lower() in ("true", "1", "yes")
+        elif col_type == "str":
+            val = str(val)
+        else:
+            raise ValueError(f"Недопустимый тип данных: {col_type}")
+        new_row[col_name] = val
+
+    table_data.append(new_row)
+    save_table_data(table_name, table_data)
+    print(f"Добавлена запись: {new_row}")
     return table_data
 
+
+@handle_db_errors
+@log_time
 def select(table_data, where_clause=None):
     """ Возвращает все записи, либо фильтр по where_clause"""
-    if not where_clause:
+    # Генерируем ключ для кэша
+    key = (tuple(table_data), frozenset(where_clause.items()) if where_clause else None)
+    def get_data():
+        if where_clause is None:
+            return table_data
+
+        result = []
+        for row in table_data:
+            match = True
+            if where_clause:
+                for k, v in where_clause.items():
+                    if k not in row or str(row[k]) != str(v):
+                        match = False
+                        break
+            if match:
+                result.append(row)
+        return result
+    return cache(key, get_data)
+
+
+@handle_db_errors
+def update(table_data, set_clause, where_clause):
+    """ Обновляет записи по where_clause"""
+    if not table_data:
+        print("Таблица пуста")
         return table_data
 
-    result = []
+    updated_count = 0
     for row in table_data:
-        if all(row.get(k) == v for k, v in where_clause.items()):
-            result.append(row)
-    return result
+        match = True
+        for key, value in where_clause.items():
+            if key not in row or str(row[key]) != str(value):
+                match = False
+                break
+
+        if match:
+            for key, new_value in sey_clause.items():
+                if key not in row:
+                    raise KeyError(f"столбец '{key}' не существует.")
+                row[key] = new_value
+            updated_count += 1
+
+    print("Обновлено записей: {updated_count}")
+    return table_data
 
 
-def update(table_data, set_clause, where_clause=None):
-    """ Обновляет записи по where_clause"""
-    updated = []
-    for row in table_data:
-        if not where_clause or all(row.get(k) == v for k, v in where_clause.items()):
-            for k, v in set_clause.items():
-                row[k] = v
-            updated.append(row)
-    return updated
-
+@handle_db_errors
+@confirm_action("удаление записей")
 def delete(table_data, where_clause):
     """ Удаляет записи по where_clause """
+    if not table_data:
+        print("Таблица пуста")
+        return table_data
+    
     new_data = []
+    deleted_count = 0
+
     for row in table_data:
-        if not all(row.get(k) == v for k, v in where_clause.items()):
+        match = True
+        for key, value in where_clause.items():
+            if key not in row or str(row[key]) != str(value):
+                match = False
+                break
+
+        if not match:
             new_data.append(row)
+        else:
+            deleted_count += 1
+
+    print("Удалено записей: {deleted_count")
     return new_data
-
-
 
