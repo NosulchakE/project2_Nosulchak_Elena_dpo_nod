@@ -2,7 +2,7 @@ install:
 	poetry install
 
 project:
-	poetry run project
+	poetry run database
 
 build:
 	poetry build
@@ -14,9 +14,9 @@ package-install:
 	python3 -m pip install dist/*.whl
 
 lint:
-	poetry run ruff check .
+	poetry run ruff check 
 
-
+.PHONY: install project build publish package-install lint
 
 
 

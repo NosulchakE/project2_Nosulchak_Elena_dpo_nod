@@ -1,12 +1,12 @@
-#!/usr/bin/env python3
+# /usr/bin/env python3
 import shlex
 from prettytable import PrettyTable
-from .utils import load_metadata, save_metadata, load_table_data, save_table_data
+from .utils import load_metadata, save_metadata, load_table_data, save_table_data, METADATA_FILE
 from .core import create_table, drop_table, insert, select, update, delete
 from .parser import parse_where_clause, parse_set_clause
 from ..decorators import handle_db_errors
+from .constants import METADATA_FILE
 
-METADATA_FILE = "db_meta.json"
 def print_help():
     """ Выводит справочную информацию по командам."""
     print("\n*** Процесс работы с таблицей ***")
@@ -22,19 +22,18 @@ def print_help():
     print("<command> exit - выйти из программы")
     print("<command> help - справочная информация\n")
 
-
 def run():
     """
     Главный цикл программы. Обрабатывает команды пользователя.
     """
+    # Загружаем текущие метаданные
+    metadata = load_metadata()
     print("*** Primitive DB ***")
     print("<command> create_table <имя> <колонка: тип>... - сщздать таблицу")
     print("<command> list_tables        - показать список таблиц")
     print("<command> drop_table <имя>        - удалить таблицу")
     print("<command> exit - выйти из программы")
     print("<command> help - справочная информация\n")
-    # Загружаем текущие метаданные
-    metadata = load_metadata(METADATA_FILE)
 
 
     while True:
@@ -47,6 +46,8 @@ def run():
         if not user_input:
             continue
         parts = shlex.split(user_input)
+        if not parts:
+            continue
         cmd = parts[0].lower()
 
         try:
@@ -57,48 +58,44 @@ def run():
                 print_help()
             
 
-            elif cmd == "list_tables":
+            elif cmd == "list" and len(parts) > 1 and parts[1].lower() == "tables":
+          
                 if metadata:
                     print("Список таблиц: ")
-                    for name, cols in metadata.items():
-                        print(f"- {name} ({','.join(cols)})") 
+                    for name, table_info in metadata.items():
+                        columns = [f"{col}:{typ}" for col, typ in table_info["columns"]]
+                        print(f"- {name}: {columns}") 
                 else:
                     print("Таблицы отсутствуют")
             
 
 
-            elif cmd == "create_table":
-                if len(parts) < 3:
+            elif cmd == "create" and len(parts) > 2 and parts[1].lower() == "table">:
+                table_name = parts[2]
+                columns = parts[3]
+                if not columns:
                     print("Некорректное значение: недостаточно аргументов.")
                     continue
-                table_name = parts[1]
-                columns =  parts[2:]
-                metadata = create_table(metadata, table_name, columns)
-                save_metadata(METADATA_FILE, metadata)
+                metedata = create_table(metadata, table_name, columns)
+                save_metadata(metedata)
 
-            elif cmd == "drop_table":
-                if len(parts) != 2:
-                    print("Ошибка. неверное количество аргументов")
+            elif cmd == "drop" and len(parts) > 1 and parts[1].lower() == "table":
+
+                if len(parts) != 3:
+                    print("Ошибка. Укажите имя таблицы для удаления")
                     continue
-                table_name = parts[1]
+                table_name = parts[2]
                 metadata = drop_table(metadata, table_name)
-                save_metadata(METADATA_FILE, metadata)
+                save_metadata(metadata)
 
             elif cmd == "insert":
                 if len(parts) < 3:
-                    print("Ошибка. неверное количество аргументов")
+                    print("Ошибка. Укажите имя таблицы и значения для вставки")
                     continue
                 table_name = parts[1]
                 values = parts[2:]
-                table_data = load_table_data(table_name)
-                table_data = insert(metadata, table_name, values, table_data)
-                save_table_data(table_name, table_data)
-
-                if table_data:
-                    table = PrettyTable()
-                    table.field_names = table_data[-1].keys()
-                    table.add_row(table_data[-1].values())
-                    print(table)
+                insert(metadata, table_name, values)
+               
 
             elif cmd == "select":
                 if len(parts) < 2:
@@ -109,8 +106,8 @@ def run():
 
                 where_clause = None
                 if "where" in parts:
-                    where_index = parts.index("where") + 1
-                    where_str = " ".join(parts[where_index:])
+                    where_index = parts.index("where") 
+                    where_str = " ".join(parts[where_index + 1:])
                     try:
                         where_clause = parse_where_clause(where_str)
                     except ValueError as e:
@@ -135,7 +132,8 @@ def run():
                 set_index = parts.index("set") + 1
                 if "where" in parts:
                     where_index = parts.index("where")
-                    set_str = " ".join(parts[where_index + 1:])
+                    set_str = " ".join(parts[set_index:where_index])
+                    where_str = " ".join(parts[where_index +1:])
                     try:
                         where_clause = parse_where_clause(where_str)
                     except ValueError as e:
@@ -152,8 +150,9 @@ def run():
                     continue
 
                 table_data = load_table_data(table_name)
-                update(table_name, set_clause, where_clause)
-                save_table_data(table_name, table_data)
+                updated_data = update(table_name, set_clause, where_clause)
+                if updated_data is not None:
+                    save_table_data(table_name, updated_data)
 
             elif cmd == "delete":
                 if len(parts) < 2:
@@ -164,15 +163,16 @@ def run():
 
                 where_clause = None
                 if "where" in parts:
-                    where_index = parts.index("where") + 1
-                    where_str = " ".join(parts[where_index:])
+                    where_index = parts.index("where") 
+                    where_str = " ".join(parts[where_index + 1:])
                     try:
                         where_clause = parse_where_clause(where_str)
                     except ValueError as e:
                         print(f"Ошибка: {e}")
                         continue
-                table_data = delete(table_name, where_clause)
-                save_table_data(table_name, table_data)
+                updated_data = delete(table_name, where_clause)
+                if updated_data is not None:
+                    save_table_data(table_name, table_data)
 
             else:
                 print(f"Функции '{cmd}' нет. попробуйте снова.")

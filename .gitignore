@@ -5,6 +5,8 @@ venv/
 # сборочные файлы
 dist/
 build/
+data/
+db_meta.json
 *.egg-info
 
 

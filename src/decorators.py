@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+from functools import wraps
 import time
 
 def handle_db_errors(func):
+"""Декоратор для обработки ошибок баз данных"""
+    @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -9,7 +12,7 @@ def handle_db_errors(func):
             print("Ошибка: файл данных не найден. Возможно база данных не инициализирована.")
         except KeyError as e:
             print(f"Ошибка. Таблица или столбец {e} не найден.")
-        except ValueError as t:
+        except ValueError as e:
             print(f"Ошибка валидации: {e}")
         except Exception as e:
             print(f"Произошла непредвиденная ошибка: {e}")
@@ -20,6 +23,7 @@ def confirm_action(action_name):
     """
 
     def decorator(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             confirmation = input(f"В уверены, что хотите выполнить '{action_name}'? [y/n]: ").strip().lower()
             if confirmation != 'y':
@@ -33,6 +37,7 @@ def confirm_action(action_name):
 def log_time(func):
     """декоратор для измерения времени выполнения функции
     """
+    @wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.monotonic()
         result = func(*args, **kwargs)

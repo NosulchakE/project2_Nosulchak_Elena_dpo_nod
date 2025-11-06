@@ -2,9 +2,10 @@
 from ..decorators import  handle_db_errors, confirm_action, log_time, create_cacher
 from  .utils import load_table_data, save_table_data
 import os
+from .constants import VALID_TYPES
+
 cache = create_cacher()
 
-VALID_TYPES = {"int", "str", "bool"}
 
 @handle_db_errors
 def create_table(metadata, table_name, columns):
@@ -13,11 +14,12 @@ def create_table(metadata, table_name, columns):
     """
     if table_name in metadata:
         print(f"Ошибка: таблица '{table_name}' уже существует.")
+        return metadata
         
    # Проверяем корректность типови формируем структуру
     table_columns = [("ID", "int")]
     for col in columns:
-        if ":" not in cjl:
+        if ":" not in col:
             raise ValueError(f"Некорректный формат столбца: {col}")
         col_name, col_type = col.split(":", 1)
         if col_type not in VALID_TYPES:
@@ -83,7 +85,7 @@ def insert(metadata, table_name, values):
 def select(table_data, where_clause=None):
     """ Возвращает все записи, либо фильтр по where_clause"""
     # Генерируем ключ для кэша
-    key = (tuple(table_data), frozenset(where_clause.items()) if where_clause else None)
+    key = (tuple(tuple(row.items()) for row in table_data), frozenset(where_clause.items()) if where_clause else None)
     def get_data():
         if where_clause is None:
             return table_data
@@ -91,11 +93,10 @@ def select(table_data, where_clause=None):
         result = []
         for row in table_data:
             match = True
-            if where_clause:
-                for k, v in where_clause.items():
-                    if k not in row or str(row[k]) != str(v):
-                        match = False
-                        break
+            for k, v in where_clause.items():
+               if k not in row or str(row[k]) != str(v):
+                    match = False
+                    break
             if match:
                 result.append(row)
         return result
@@ -103,7 +104,8 @@ def select(table_data, where_clause=None):
 
 
 @handle_db_errors
-def update(table_data, set_clause, where_clause):
+@log_time
+def update(table_data, set_clause, where_clause=None):
     """ Обновляет записи по where_clause"""
     if not table_data:
         print("Таблица пуста")
@@ -112,16 +114,26 @@ def update(table_data, set_clause, where_clause):
     updated_count = 0
     for row in table_data:
         match = True
-        for key, value in where_clause.items():
-            if key not in row or str(row[key]) != str(value):
-                match = False
-                break
+        if where clause:
+            for key, value in where_clause.items():
+                if key not in row or str(row[key]) != str(value):
+                    match = False
+                    break
 
         if match:
             for key, new_value in sey_clause.items():
                 if key not in row:
                     raise KeyError(f"столбец '{key}' не существует.")
-                row[key] = new_value
+                current_value = row[key]
+                if isinstance(current_value, bool):
+
+                    row[key] = new_value.lower() in ("true", "1", "yes")
+                elif isinstance(current_value, int):
+                    row[key] = int(new_value)
+                else:
+                    row[key] = str(new_value)
+
+
             updated_count += 1
 
     print("Обновлено записей: {updated_count}")
@@ -130,14 +142,18 @@ def update(table_data, set_clause, where_clause):
 
 @handle_db_errors
 @confirm_action("удаление записей")
-def delete(table_data, where_clause):
+@log_time
+def delete(table_data, where_clause=None):
     """ Удаляет записи по where_clause """
     if not table_data:
         print("Таблица пуста")
         return table_data
-    
-    new_data = []
-    deleted_count = 0
+    if where_clause is None:
+        deleted_count = len(table_data)
+        new_data = []
+    else:
+        new_data = []
+        deleted_count = 0
 
     for row in table_data:
         match = True
