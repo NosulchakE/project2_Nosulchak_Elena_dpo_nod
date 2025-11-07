@@ -3,7 +3,6 @@ from functools import wraps
 import time
 
 def handle_db_errors(func):
-"""Декоратор для обработки ошибок баз данных"""
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -32,6 +31,7 @@ def confirm_action(action_name):
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
 
 
 def log_time(func):

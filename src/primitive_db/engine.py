@@ -11,9 +11,9 @@ def print_help():
     """ Выводит справочную информацию по командам."""
     print("\n*** Процесс работы с таблицей ***")
     print("Функции:")
-    print("<command> create_table <имя_таблицы> <столбец1:тип>... - создать таблицу")
-    print("<command> list_tables        - показать список таблиц")
-    print("<command> drop_table <имя_таблицы>        - удалить таблицу")
+    print("<command> create table <имя_таблицы> <столбец1:тип>... - создать таблицу")
+    print("<command> list tables        - показать список таблиц")
+    print("<command> drop table <имя_таблицы>        - удалить таблицу")
     print("<command> insert <таблица> <значение1> <значение2>...- вставка записи")
     print("<command> select <таблица>[where...] - выбрать записи")
     print("<command> update <таблица> set...[where...] - обновить записи")
@@ -27,13 +27,9 @@ def run():
     Главный цикл программы. Обрабатывает команды пользователя.
     """
     # Загружаем текущие метаданные
-    metadata = load_metadata()
+    
     print("*** Primitive DB ***")
-    print("<command> create_table <имя> <колонка: тип>... - сщздать таблицу")
-    print("<command> list_tables        - показать список таблиц")
-    print("<command> drop_table <имя>        - удалить таблицу")
-    print("<command> exit - выйти из программы")
-    print("<command> help - справочная информация\n")
+    print("Введите 'help' - справочная информация\n")
 
 
     while True:
@@ -59,25 +55,32 @@ def run():
             
 
             elif cmd == "list" and len(parts) > 1 and parts[1].lower() == "tables":
-          
+                metadata = load_metadata()
+
+                print(f"DEBUG:  Загружено метаданных: {metadata}")
+                print(f"DEBUG:  Тип: {type(metadata)}")
+                print(f"DEBUG:  Количество таблиц: {len(metadata)}")         
                 if metadata:
                     print("Список таблиц: ")
                     for name, table_info in metadata.items():
                         columns = [f"{col}:{typ}" for col, typ in table_info["columns"]]
-                        print(f"- {name}: {columns}") 
+                        print(f"   {name}: {columns}") 
                 else:
                     print("Таблицы отсутствуют")
             
 
 
-            elif cmd == "create" and len(parts) > 2 and parts[1].lower() == "table">:
+            elif cmd == "create" and len(parts) > 2 and parts[1].lower() == "table":
                 table_name = parts[2]
-                columns = parts[3]
+                columns = parts[3:]
                 if not columns:
-                    print("Некорректное значение: недостаточно аргументов.")
+                    print("Некорректное значение: укажите столбцы для таблицы.")
                     continue
+                metadata = load_metadata()
                 metedata = create_table(metadata, table_name, columns)
                 save_metadata(metedata)
+                save_table_data(table_name, [])
+                print(f"Файл data/{table_name}.json создан")
 
             elif cmd == "drop" and len(parts) > 1 and parts[1].lower() == "table":
 
@@ -85,8 +88,10 @@ def run():
                     print("Ошибка. Укажите имя таблицы для удаления")
                     continue
                 table_name = parts[2]
+                metadata = load_metadata()
                 metadata = drop_table(metadata, table_name)
                 save_metadata(metadata)
+                print(f"Таблица {table_name} удалена из метаданных")
 
             elif cmd == "insert":
                 if len(parts) < 3:
@@ -94,6 +99,8 @@ def run():
                     continue
                 table_name = parts[1]
                 values = parts[2:]
+                metadata = load_metadata()
+
                 insert(metadata, table_name, values)
                
 
@@ -172,7 +179,7 @@ def run():
                         continue
                 updated_data = delete(table_name, where_clause)
                 if updated_data is not None:
-                    save_table_data(table_name, table_data)
+                    save_table_data(table_name, updated_data)
 
             else:
                 print(f"Функции '{cmd}' нет. попробуйте снова.")

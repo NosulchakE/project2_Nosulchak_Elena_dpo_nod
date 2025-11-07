@@ -13,8 +13,7 @@ def create_table(metadata, table_name, columns):
     Создать таблицу. С проверками
     """
     if table_name in metadata:
-        print(f"Ошибка: таблица '{table_name}' уже существует.")
-        return metadata
+        raise ValueError(f"Ошибка: таблица '{table_name}' уже существует.")
         
    # Проверяем корректность типови формируем структуру
     table_columns = [("ID", "int")]
@@ -52,15 +51,15 @@ def insert(metadata, table_name, values):
         raise KeyError(f" таблицы '{table_name}' не существует.")
 
     table_info = metadata[table_name]
-    columns = [col_name for col_name, _ in table_info['columns'] if col_name != "ID"]
+    columns_without_id = [col_name for col_name, _ in table_info['columns'] if col_name != "ID"]
 
-    if len(values) != len(columns):
-        raise ValueError(f"Ожидается {len(columns)} значений (без ID), получено {len(values)}")
+    if len(values) != len(columns_without_id):
+        raise ValueError(f"Ожидается {len(columns_without_id)} значений (без ID), получено {len(values)}")
 
     # Загружаем данные
     table_data = load_table_data(table_name)
 
-    new_id = max((row["ID"] for row in table_data), default=0) +1
+    new_id = max((row.get["ID", 0] for row in table_data), default=0) +1
 
     new_row = {"ID": new_id}
     for (col_name, col_type), val in zip(table_info["columns"][1:], values):
@@ -70,9 +69,8 @@ def insert(metadata, table_name, values):
             val = val.lower() in ("true", "1", "yes")
         elif col_type == "str":
             val = str(val)
-        else:
-            raise ValueError(f"Недопустимый тип данных: {col_type}")
         new_row[col_name] = val
+            
 
     table_data.append(new_row)
     save_table_data(table_name, table_data)
@@ -93,8 +91,8 @@ def select(table_data, where_clause=None):
         result = []
         for row in table_data:
             match = True
-            for k, v in where_clause.items():
-               if k not in row or str(row[k]) != str(v):
+            for key, value in where_clause.items():
+               if key not in row or str(row[key]) != str(value):
                     match = False
                     break
             if match:
@@ -114,14 +112,14 @@ def update(table_data, set_clause, where_clause=None):
     updated_count = 0
     for row in table_data:
         match = True
-        if where clause:
+        if where_clause:
             for key, value in where_clause.items():
                 if key not in row or str(row[key]) != str(value):
                     match = False
                     break
 
         if match:
-            for key, new_value in sey_clause.items():
+            for key, new_value in set_clause.items():
                 if key not in row:
                     raise KeyError(f"столбец '{key}' не существует.")
                 current_value = row[key]
@@ -155,17 +153,17 @@ def delete(table_data, where_clause=None):
         new_data = []
         deleted_count = 0
 
-    for row in table_data:
-        match = True
-        for key, value in where_clause.items():
-            if key not in row or str(row[key]) != str(value):
-                match = False
-                break
+        for row in table_data:
+            match = True
+            for key, value in where_clause.items():
+                if key not in row or str(row[key]) != str(value):
+                    match = False
+                    break
 
-        if not match:
-            new_data.append(row)
-        else:
-            deleted_count += 1
+            if not match:
+                new_data.append(row)
+            else:
+                deleted_count += 1
 
     print("Удалено записей: {deleted_count")
     return new_data
