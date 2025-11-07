@@ -8,13 +8,13 @@ def load_metadata():
     """
     Загружает данные. Если файл не найден вернет словарь.
     """
-    print(f"DEBUG:  Текущий файл: {Path(__file__).resolve()}")
-    print(f"DEBUG:  PROJECT_ROOT: {PROJECT_ROOT}")
-    print(f"DEBUG:  Ищем файл по пути: {METADATA_FILE}")
-    print(f"DEBUG:  Файл существует: {METADATA_FILE.exists()}")
+    from pathlib import Path
+    current_dir = Path.cwd()
+    print(f"DEBUG:  Текущий файл: {current_dir}")
+    print(f"DEBUG:  Файлы здесь: {list(current_dir.glob('*.json'))}")
+   
 
-    if PROJECT_ROOT.exists():
-        print(f"DEBUG:  Файлы в корне: {list(PROJECT_ROOT.glob('*.json'))}")
+   
     try:
         with open(METADATA_FILE, "r", encoding="utf-8") as file:
             content = file.read().strip()
