@@ -1,18 +1,42 @@
 {
     "users": {
         "columns": [
-            ["ID", "int"],
-            ["name", "str"],
-            ["age", "int"],
-            ["active", "bool"]
-       ]
+            [
+                "ID",
+                "int"
+            ],
+            [
+                "name",
+                "str"
+            ],
+            [
+                "age",
+                "int"
+            ],
+            [
+                "active",
+                "bool"
+            ]
+        ]
     },
     "products": {
         "columns": [
-            ["ID", "int"],
-            ["title", "str"],
-            ["price", "int"],
-            ["in_stock", "bool"]
+            [
+                "ID",
+                "int"
+            ],
+            [
+                "title",
+                "str"
+            ],
+            [
+                "price",
+                "int"
+            ],
+            [
+                "in_stock",
+                "bool"
+            ]
         ]
     }
 }

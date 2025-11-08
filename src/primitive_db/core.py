@@ -25,8 +25,9 @@ def create_table(metadata, table_name, columns):
             raise ValueError(f"Некорректный тип данных: {col_type}")
         table_columns.append((col_name, col_type))
 
-    metadata[table_name] = {"columns: table_columns"}
+    metadata[table_name] = {"columns": table_columns}
     print(f"Таблица '{table_name}' создана. Колонки: {table_columns}")
+
     return metadata
 
 @handle_db_errors
@@ -58,8 +59,10 @@ def insert(metadata, table_name, values):
 
     # Загружаем данные
     table_data = load_table_data(table_name)
-
-    new_id = max((row.get["ID", 0] for row in table_data), default=0) +1
+    if table_data:
+        new_id = max(row.get("ID", 0) for row in table_data) + 1
+    else:
+        new_id = 1
 
     new_row = {"ID": new_id}
     for (col_name, col_type), val in zip(table_info["columns"][1:], values):

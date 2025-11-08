@@ -12,11 +12,6 @@ def parse_value(value):
     if value.isdigit() or (value.startswith('-') and value[1:].isdigit()):
         return int(value)
 
-    # Вещественное число
-    try:
-        return float(value)
-    except ValueError:
-        pass
 
     # Буллево
     if value.lower() == "true":
@@ -24,7 +19,7 @@ def parse_value(value):
     if value.lower() == "false":
         return False
 
-    raise value
+    return value
 
 def parse_set_clause(set_string):
     """ преобразует строку в словарь"""
@@ -45,11 +40,11 @@ def parse_where_clause(where_string):
     """ преобразует строку в словарь """
     result = {}
     conditions = where_string.split("AND")
-    for conditions in conditions:
-        conditions = conditions.strip()
-        if "=" not in conditions:
-            raise ValueError(f"Неизвестный синтаксис WHERE: {conditions}")
-        field, value = conditions.split("=", 1)
+    for condition in conditions:
+        condition = condition.strip()
+        if "=" not in condition:
+            raise ValueError(f"Неизвестный синтаксис WHERE: {condition}")
+        field, value = condition.split("=", 1)
         result[field.strip()] = parse_value(value)
 
     return result

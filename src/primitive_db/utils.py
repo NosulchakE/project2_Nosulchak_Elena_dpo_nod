@@ -8,19 +8,12 @@ def load_metadata():
     """
     Загружает данные. Если файл не найден вернет словарь.
     """
-    from pathlib import Path
-    current_dir = Path.cwd()
-    print(f"DEBUG:  Текущий файл: {current_dir}")
-    print(f"DEBUG:  Файлы здесь: {list(current_dir.glob('*.json'))}")
-   
 
-   
     try:
-        with open(METADATA_FILE, "r", encoding="utf-8") as file:
-            content = file.read().strip()
-            print(f"DEBUG:Прочитано из файла: '{content}'") 
+        with open(METADATA_FILE, "r", encoding="utf-8") as f:
+            content = f.read().strip() 
             if content:
-                data = json.load(content)
+                data = json.loads(content)
                 print(f"DEBUG:  json загружен: {data}")
                 return data
             else:
@@ -34,16 +27,28 @@ def load_metadata():
         print(f"Ошибка: файл {METADATA_FILE} поврежден или не является JSON.")
         return{}
 
-def save_metadata(data= None):
+def save_metadata(data=None):
     """
     Сохраняет переданные файлы в JSON-файл.
     """
     if data is None:
         data = {}
-    METADATA_FILE.parent.mkdir(exist_ok=True)
-    with open(METADATA_FILE, "w", encoding="utf-8") as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
 
+    print(f"DEBUG:    Данные для сохранения:  {data}")
+    for key, value in data.items():
+        print(f"DEBUG:   {key}:  {type(value)} - {value}")
+
+    METADATA_FILE.parent.mkdir(exist_ok=True)
+    try:
+        with open(METADATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+        print(f"DEBUG:    Метаданные успешно сохранены")
+    except Exception as e:
+        print(f"DEBUG:    Ошибка при сохранении:  {e}")
+        try:
+            json.dumps(data)
+        except Exception as json_error:
+            print(f"DEBUG:  Проблема с сериализацией:  {json_error}")
 
 
 def load_table_data(table_name: str):

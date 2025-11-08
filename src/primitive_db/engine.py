@@ -143,8 +143,9 @@ def run():
                     where_str = " ".join(parts[where_index +1:])
                     try:
                         where_clause = parse_where_clause(where_str)
+                        print(f"DEBUG:   where_clause = {where_clause}")
                     except ValueError as e:
-                        print(f"Ошибка: {e}")
+                        print(f"Ошибка: парсинга where  {e}")
                         continue
                 else:
                     set_str = " ".join(parts[set_index:])
@@ -152,8 +153,9 @@ def run():
 
                 try:
                     set_clause = parse_set_clause(set_str)
+                    print(f"DEBUG:   set_clause = {set_clause}")
                 except ValueError as e:
-                    print(f"Ошибка: {e}")
+                    print(f"Ошибка: парсинга {e}")
                     continue
 
                 table_data = load_table_data(table_name)
