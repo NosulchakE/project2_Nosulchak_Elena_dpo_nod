@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-from ..decorators import  handle_db_errors, confirm_action, log_time, create_cacher
-from  .utils import load_table_data, save_table_data
-import os
+
+from ..decorators import (
+    confirm_action, 
+    create_cacher, 
+    handle_db_errors, 
+    log_time
+)
 from .constants import VALID_TYPES
+from .utils import load_table_data, save_table_data
 
 cache = create_cacher()
 
@@ -14,8 +19,8 @@ def create_table(metadata, table_name, columns):
     """
     if table_name in metadata:
         raise ValueError(f"Ошибка: таблица '{table_name}' уже существует.")
-        
-   # Проверяем корректность типови формируем структуру
+
+    # Проверяем корректность типови формируем структуру
     table_columns = [("ID", "int")]
     for col in columns:
         if ":" not in col:
@@ -30,6 +35,7 @@ def create_table(metadata, table_name, columns):
 
     return metadata
 
+
 @handle_db_errors
 @confirm_action("удаление таблицы")
 def drop_table(metadata, table_name):
@@ -43,7 +49,7 @@ def drop_table(metadata, table_name):
     return metadata
 
 
-#___CRUD___
+# ___CRUD___
 @handle_db_errors
 @log_time
 def insert(metadata, table_name, values):
@@ -52,15 +58,21 @@ def insert(metadata, table_name, values):
         raise KeyError(f" таблицы '{table_name}' не существует.")
 
     table_info = metadata[table_name]
-    columns_without_id = [col_name for col_name, _ in table_info['columns'] if col_name != "ID"]
+    columns_without_id = [
+        col_name for col_name, _ in table_info["columns"] if col_name != "ID"
+    ]
 
     if len(values) != len(columns_without_id):
-        raise ValueError(f"Ожидается {len(columns_without_id)} значений (без ID), получено {len(values)}")
+        raise ValueError(
+            f"Вместо {len(columns_without_id)} зн.(без ID),имеем {len(values)}"
+        )
 
     # Загружаем данные
     table_data = load_table_data(table_name)
     if not isinstance(table_data, list):
-        print(f"DEBUG:    Ошибка типа table_data: ожидался list, получен {type(table_data)}")
+        print(
+            f"DEBUG:Ошибка table_data:ожидался list, получен {type(table_data)}"
+        )
         table_data = []
 
     if table_data:
@@ -82,7 +94,6 @@ def insert(metadata, table_name, values):
         elif col_type == "str":
             val = str(val)
         new_row[col_name] = val
-            
 
     table_data.append(new_row)
     save_table_data(table_name, table_data)
@@ -93,14 +104,20 @@ def insert(metadata, table_name, values):
 @handle_db_errors
 @log_time
 def select(table_data, where_clause=None):
-    """ Возвращает все записи, либо фильтр по where_clause"""
+    """Возвращает все записи, либо фильтр по where_clause"""
     if not isinstance(table_data, list):
-        print(f"DEBUG:    Ошибка типа table_data: ожидался list, получен {type(table_data)}")
+        print(
+            f"DEBUG:тип table_data: ожидался list, получен {type(table_data)}"
+        )
         if isinstance(table_data, str):
-            print(f"DEBUG:    table_data сщдержит строку: {table_data}")
+            print(f"DEBUG:table_data сщдержит строку: {table_data}")
         return []
     # Генерируем ключ для кэша
-    key = (tuple(tuple(row.items()) for row in table_data), frozenset(where_clause.items()) if where_clause else None)
+    key = (
+        tuple(tuple(row.items()) for row in table_data),
+        frozenset(where_clause.items()) if where_clause else None,
+    )
+
     def get_data():
         if where_clause is None:
             return table_data
@@ -108,25 +125,28 @@ def select(table_data, where_clause=None):
         result = []
         for row in table_data:
             if not isinstance(row, dict):
-                print(f"DEBUG:    Пропускаем некорректную строку: {row}")
+                print(f"DEBUG:Пропускаем некорректную строку: {row}")
                 continue
             match = True
             for key, value in where_clause.items():
-               if key not in row or str(row[key]) != str(value):
+                if key not in row or str(row[key]) != str(value):
                     match = False
                     break
             if match:
                 result.append(row)
         return result
+
     return cache(key, get_data)
 
 
 @handle_db_errors
 @log_time
 def update(table_data, set_clause, where_clause=None):
-    """ Обновляет записи по where_clause"""
+    """Обновляет записи по where_clause"""
     if not isinstance(table_data, list):
-        print(f"DEBUG:    Ошибка типа table_data: ожидался list, получен {type(table_data)}")
+        print(
+            f"DEBUG:тип table_data: ожидался list, получен {type(table_data)}"
+        )
         return []
     if not table_data:
         print("Таблица пуста")
@@ -160,15 +180,14 @@ def update(table_data, set_clause, where_clause=None):
                     try:
                         row[key] = int(new_value)
                     except ValueError:
-                        print(f"   не удалось преобразовать {new_value} в int")
+                        print(f"не удалось преобразовать {new_value} в int")
                 else:
                     row[key] = str(new_value)
-
 
             updated_count += 1
 
     print("Обновлено записей: {updated_count}")
-    print(f"DEBUG:    update возвращает: {type(table_data)} - {table_data}")
+    print(f"DEBUG:update возвращает: {type(table_data)} - {table_data}")
     return table_data
 
 
@@ -176,7 +195,7 @@ def update(table_data, set_clause, where_clause=None):
 @confirm_action("удаление записей")
 @log_time
 def delete(table_data, where_clause=None):
-    """ Удаляет записи по where_clause """
+    """Удаляет записи по where_clause"""
     if not table_data:
         print("Таблица пуста")
         return table_data
@@ -201,5 +220,3 @@ def delete(table_data, where_clause=None):
 
     print("Удалено записей: {deleted_count")
     return new_data
-
-

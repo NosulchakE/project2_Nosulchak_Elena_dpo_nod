@@ -1,17 +1,22 @@
 #!/usr/bin/env/ puthon3
 
+
 def parse_value(value):
-    """ Определяет тип значения и приводит его к нужному """
+    """Определяет тип значения и приводит его к нужному"""
     value = value.strip()
 
     # Строковые значения в кавычках
-    if (value.startswith("'") and value.endswith("'") or value.startswith('"') and value.endswith('"')):
+    if (
+        value.startswith("'")
+        and value.endswith("'")
+        or value.startswith('"')
+        and value.endswith('"')
+    ):
         return value[1:-1]
 
     # Целое число
-    if value.isdigit() or (value.startswith('-') and value[1:].isdigit()):
+    if value.isdigit() or (value.startswith("-") and value[1:].isdigit()):
         return int(value)
-
 
     # Буллево
     if value.lower() == "true":
@@ -21,8 +26,9 @@ def parse_value(value):
 
     return value
 
+
 def parse_set_clause(set_string):
-    """ преобразует строку в словарь"""
+    """преобразует строку в словарь"""
     result = {}
     parts = set_string.split(",")
 
@@ -36,8 +42,9 @@ def parse_set_clause(set_string):
 
     return result
 
+
 def parse_where_clause(where_string):
-    """ преобразует строку в словарь """
+    """преобразует строку в словарь"""
     result = {}
     conditions = where_string.split("AND")
     for condition in conditions:
@@ -48,5 +55,3 @@ def parse_where_clause(where_string):
         result[field.strip()] = parse_value(value)
 
     return result
-
-

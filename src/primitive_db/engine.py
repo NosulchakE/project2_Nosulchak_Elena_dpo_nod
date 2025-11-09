@@ -1,14 +1,20 @@
 # /usr/bin/env python3
 import shlex
+
 from prettytable import PrettyTable
-from .utils import load_metadata, save_metadata, load_table_data, save_table_data, METADATA_FILE
-from .core import create_table, drop_table, insert, select, update, delete
-from .parser import parse_where_clause, parse_set_clause
-from ..decorators import handle_db_errors
-from .constants import METADATA_FILE
+
+from .core import create_table, delete, drop_table, insert, select, update
+from .parser import parse_set_clause, parse_where_clause
+from .utils import (
+    load_metadata,
+    load_table_data,
+    save_metadata,
+    save_table_data,
+)
+
 
 def print_help():
-    """ Выводит справочную информацию по командам."""
+    """Выводит справочную информацию по командам."""
     print("\n*** Процесс работы с таблицей ***")
     print("Функции:")
     print("<command> create table <имя_таблицы> <столбец1:тип>... - создать таблицу")
@@ -22,15 +28,15 @@ def print_help():
     print("<command> exit - выйти из программы")
     print("<command> help - справочная информация\n")
 
+
 def run():
     """
     Главный цикл программы. Обрабатывает команды пользователя.
     """
     # Загружаем текущие метаданные
-    
+
     print("*** Primitive DB ***")
     print("Введите 'help' - справочная информация\n")
-
 
     while True:
         try:
@@ -52,23 +58,20 @@ def run():
                 break
             elif cmd == "help":
                 print_help()
-            
 
             elif cmd == "list" and len(parts) > 1 and parts[1].lower() == "tables":
                 metadata = load_metadata()
 
                 print(f"DEBUG:  Загружено метаданных: {metadata}")
                 print(f"DEBUG:  Тип: {type(metadata)}")
-                print(f"DEBUG:  Количество таблиц: {len(metadata)}")         
+                print(f"DEBUG:  Количество таблиц: {len(metadata)}")
                 if metadata:
                     print("Список таблиц: ")
                     for name, table_info in metadata.items():
                         columns = [f"{col}:{typ}" for col, typ in table_info["columns"]]
-                        print(f"   {name}: {columns}") 
+                        print(f"   {name}: {columns}")
                 else:
                     print("Таблицы отсутствуют")
-            
-
 
             elif cmd == "create" and len(parts) > 2 and parts[1].lower() == "table":
                 table_name = parts[2]
@@ -83,7 +86,6 @@ def run():
                 print(f"Файл data/{table_name}.json создан")
 
             elif cmd == "drop" and len(parts) > 1 and parts[1].lower() == "table":
-
                 if len(parts) != 3:
                     print("Ошибка. Укажите имя таблицы для удаления")
                     continue
@@ -102,7 +104,6 @@ def run():
                 metadata = load_metadata()
 
                 insert(metadata, table_name, values)
-               
 
             elif cmd == "select":
                 if len(parts) < 2:
@@ -113,8 +114,8 @@ def run():
 
                 where_clause = None
                 if "where" in parts:
-                    where_index = parts.index("where") 
-                    where_str = " ".join(parts[where_index + 1:])
+                    where_index = parts.index("where")
+                    where_str = " ".join(parts[where_index + 1 :])
                     try:
                         where_clause = parse_where_clause(where_str)
                     except ValueError as e:
@@ -130,7 +131,6 @@ def run():
                 else:
                     print("Записи не найдены")
 
-
             elif cmd == "update":
                 if len(parts) < 4 or "set" not in parts:
                     print("Ошибка. Неверный синтаксис update")
@@ -141,7 +141,7 @@ def run():
                 if "where" in parts:
                     where_index = parts.index("where")
                     set_str = " ".join(parts[set_index:where_index])
-                    where_str = " ".join(parts[where_index +1:])
+                    where_str = " ".join(parts[where_index + 1 :])
                     try:
                         where_clause = parse_where_clause(where_str)
                         print(f"DEBUG:   where_clause = {where_clause}")
@@ -159,14 +159,15 @@ def run():
                     print(f"Ошибка: парсинга {e}")
                     continue
 
-                
                 updated_data = update(table_data, set_clause, where_clause)
                 print(f"DEBUG:    update вернул: {type(updated_data)}")
                 if updated_data is not None and isinstance(updated_data, list):
                     save_table_data(table_name, updated_data)
-                    print(f"DEBUG:    Данные успешно сохранены!")
+                    print("DEBUG:    Данные успешно сохранены!")
                 else:
-                    print(f"DEBUG:    Ошибка update вернул: некорректные данные: {updated_data}")
+                    print(
+                        f"DEBUG:update вернул некорректные данные: {updated_data}"
+                    )
 
             elif cmd == "delete":
                 if len(parts) < 2:
@@ -177,8 +178,8 @@ def run():
 
                 where_clause = None
                 if "where" in parts:
-                    where_index = parts.index("where") 
-                    where_str = " ".join(parts[where_index + 1:])
+                    where_index = parts.index("where")
+                    where_str = " ".join(parts[where_index + 1 :])
                     try:
                         where_clause = parse_where_clause(where_str)
                     except ValueError as e:
@@ -193,5 +194,3 @@ def run():
 
         except Exception as e:
             print(f"ПРоизошла ошибка: {e}")
-
-
