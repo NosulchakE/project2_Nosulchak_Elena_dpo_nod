@@ -38,25 +38,5 @@
                 "bool"
             ]
         ]
-    },
-    "emp": {
-        "columns": [
-            [
-                "ID",
-                "int"
-            ],
-            [
-                "name",
-                "str"
-            ],
-            [
-                "age",
-                "int"
-            ],
-            [
-                "active",
-                "bool"
-            ]
-        ]
     }
 }

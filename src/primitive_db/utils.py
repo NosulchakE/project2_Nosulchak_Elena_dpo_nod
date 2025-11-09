@@ -69,7 +69,7 @@ def load_table_data(table_name: str):
                 print(f"DEBUG:    Ошибка: файл {table_name}.json сщдержит str вместо list")
                 if data == table_name:
                     print(f"DEBUG:    В файле сохранено имя таблицы вместо данных")
-                return []
+                    return []
                 else:
                     try:
                         corrected_data = json.loads(data)

@@ -160,7 +160,7 @@ def run():
                     continue
 
                 
-                updated_data = update(table_name, set_clause, where_clause)
+                updated_data = update(table_data, set_clause, where_clause)
                 print(f"DEBUG:    update вернул: {type(updated_data)}")
                 if updated_data is not None and isinstance(updated_data, list):
                     save_table_data(table_name, updated_data)

@@ -77,7 +77,8 @@ def insert(metadata, table_name, values):
         if col_type == "int":
             val = int(val)
         elif col_type == "bool":
-            val = val.lower() in ("true", "1", "yes")
+            str_val = val.lower()
+            val = str_val in ("true", "1", "yes")
         elif col_type == "str":
             val = str(val)
         new_row[col_name] = val
@@ -144,12 +145,22 @@ def update(table_data, set_clause, where_clause=None):
             for key, new_value in set_clause.items():
                 if key not in row:
                     raise KeyError(f"столбец '{key}' не существует.")
+
                 current_value = row[key]
                 if isinstance(current_value, bool):
+                    str_value = str(new_value).lower()
+                    if str_value in ("true", "1", "yes"):
+                        row[key] = True
+                    elif str_value in ("false", "0", "no"):
+                        row[key] = False
+                    else:
+                        print(f" не удалось распознать {new_value} в boolean")
 
-                    row[key] = new_value.lower() in ("true", "1", "yes")
                 elif isinstance(current_value, int):
-                    row[key] = int(new_value)
+                    try:
+                        row[key] = int(new_value)
+                    except ValueError:
+                        print(f"   не удалось преобразовать {new_value} в int")
                 else:
                     row[key] = str(new_value)
 
