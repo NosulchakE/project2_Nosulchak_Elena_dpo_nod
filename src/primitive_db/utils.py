@@ -63,14 +63,36 @@ def load_table_data(table_name: str):
             content = f.read().strip()
             if not content:
                 return[]
-            return json.loads(content)
-    except (json.JSONDecodeError, FileNotFoundError):
+            data =  json.loads(content)
+            print(f"DEBUG:    Содержимое файла после парсинга: {data}, тип: {type(data)}")
+            if isinstance(data, str):
+                print(f"DEBUG:    Ошибка: файл {table_name}.json сщдержит str вместо list")
+                if data == table_name:
+                    print(f"DEBUG:    В файле сохранено имя таблицы вместо данных")
+                return []
+                else:
+                    try:
+                        corrected_data = json.loads(data)
+                        if isinstance(corrected_data, list):
+                            return corrected_data
+                    except:
+                        pass
+                return []
+            return data
+    except (json.JSONDecodeError, FileNotFoundError) as e:
+        print(f"DEBUG:    Ошибка загрузки {table_name}.json: {е}")
         return[]
 
 def save_table_data(table_name: str, data):
     """ Сщхранение таблиц в файл """
     file_path = DATA_DIR/f"{table_name}.json"
     DATA_DIR.mkdir(exist_ok=True)
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
-
+    if not isinstance(data, list):
+        print(f"DEBUG:    Ошибка: пытаемся сохранить {type(data)} вместо list: {data}")
+        return
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+        print(f"DEBUG:    Данные сохранены в {file_path}, записей {len(data)}")
+    except Exception as e:
+        print(f"DEBUG:    Ошибка сохранения {file_path}: {е}")

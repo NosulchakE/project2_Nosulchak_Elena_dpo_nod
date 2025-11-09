@@ -52,10 +52,24 @@ def create_cacher():
     """
     cache = {}
     def cache_result(key, value_func):
+        try:
+            hash(key)
+        except TypeError:
+            return value_func()
+
         if key in cache:
-            return cache[key]
+            cached_result = cache[key]
+            if isinstance(cached_result, str):
+                print(f"DEBUG:    Найден поврежденный кеш для {key}, пересчитываем")
+                result = value_func()
+                cache[key] = result
+                return result
+            print(f"[кеш] Результат взят из кеша")
+            return cached_result
         result = value_func()
-        cache[key] = result
+        if not isinstance(result, str):
+            cache[key] = result
         return result
 
     return cache_result
+

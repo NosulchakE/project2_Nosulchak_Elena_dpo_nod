@@ -136,6 +136,7 @@ def run():
                     print("Ошибка. Неверный синтаксис update")
                     continue
                 table_name = parts[1]
+                table_data = load_table_data(table_name)
                 set_index = parts.index("set") + 1
                 if "where" in parts:
                     where_index = parts.index("where")
@@ -158,10 +159,14 @@ def run():
                     print(f"Ошибка: парсинга {e}")
                     continue
 
-                table_data = load_table_data(table_name)
+                
                 updated_data = update(table_name, set_clause, where_clause)
-                if updated_data is not None:
+                print(f"DEBUG:    update вернул: {type(updated_data)}")
+                if updated_data is not None and isinstance(updated_data, list):
                     save_table_data(table_name, updated_data)
+                    print(f"DEBUG:    Данные успешно сохранены!")
+                else:
+                    print(f"DEBUG:    Ошибка update вернул: некорректные данные: {updated_data}")
 
             elif cmd == "delete":
                 if len(parts) < 2:

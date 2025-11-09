@@ -59,8 +59,16 @@ def insert(metadata, table_name, values):
 
     # Загружаем данные
     table_data = load_table_data(table_name)
+    if not isinstance(table_data, list):
+        print(f"DEBUG:    Ошибка типа table_data: ожидался list, получен {type(table_data)}")
+        table_data = []
+
     if table_data:
-        new_id = max(row.get("ID", 0) for row in table_data) + 1
+        try:
+            new_id = max(row.get("ID", 0) for row in table_data) + 1
+        except Exception as e:
+            print(f"DEBUG:    Ошибка генерации id: {e}")
+            new_id = 1
     else:
         new_id = 1
 
@@ -85,6 +93,11 @@ def insert(metadata, table_name, values):
 @log_time
 def select(table_data, where_clause=None):
     """ Возвращает все записи, либо фильтр по where_clause"""
+    if not isinstance(table_data, list):
+        print(f"DEBUG:    Ошибка типа table_data: ожидался list, получен {type(table_data)}")
+        if isinstance(table_data, str):
+            print(f"DEBUG:    table_data сщдержит строку: {table_data}")
+        return []
     # Генерируем ключ для кэша
     key = (tuple(tuple(row.items()) for row in table_data), frozenset(where_clause.items()) if where_clause else None)
     def get_data():
@@ -93,6 +106,9 @@ def select(table_data, where_clause=None):
 
         result = []
         for row in table_data:
+            if not isinstance(row, dict):
+                print(f"DEBUG:    Пропускаем некорректную строку: {row}")
+                continue
             match = True
             for key, value in where_clause.items():
                if key not in row or str(row[key]) != str(value):
@@ -108,6 +124,9 @@ def select(table_data, where_clause=None):
 @log_time
 def update(table_data, set_clause, where_clause=None):
     """ Обновляет записи по where_clause"""
+    if not isinstance(table_data, list):
+        print(f"DEBUG:    Ошибка типа table_data: ожидался list, получен {type(table_data)}")
+        return []
     if not table_data:
         print("Таблица пуста")
         return table_data
@@ -138,6 +157,7 @@ def update(table_data, set_clause, where_clause=None):
             updated_count += 1
 
     print("Обновлено записей: {updated_count}")
+    print(f"DEBUG:    update возвращает: {type(table_data)} - {table_data}")
     return table_data
 
 
@@ -170,4 +190,5 @@ def delete(table_data, where_clause=None):
 
     print("Удалено записей: {deleted_count")
     return new_data
+
 
