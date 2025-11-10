@@ -6,9 +6,10 @@
 ### 🎥 Demo
 
 Посмотреть запись работы в терминале можно здесь:
-👉 asciinema.org/a/XXXXXXXX
+👉 [![asciinema](https://asciinema.org/a/PFSRry3zOuX10CJeSk1gNSbVx.svg)](https://asciinema.org/a/PFSRry3zOuX10CJeSk1gNSbVx)
 
-(добавь сюда ссылку после загрузки демо через asciinema upload demo.cast)
+[Посмотреть запись работы в терминале на asciinema.org](https://asciinema.org/a/PFSRry3zOuX10CJeSk1gNSbVx)
+
 
 
 #### 📦 Структура проекта
