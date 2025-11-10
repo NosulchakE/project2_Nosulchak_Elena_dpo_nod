@@ -135,8 +135,13 @@ def select(table_data, where_clause=None):
             if match:
                 result.append(row)
         return result
+    cached_result = cache(key, get_data)
+    if isinstance(cached_result, str):
+        print(f"DEBUG: Кеш поврежден, пересчитываем данные")
+        return get_data()
 
-    return cache(key, get_data)
+    return cached_result
+
 
 
 @handle_db_errors
@@ -196,6 +201,9 @@ def update(table_data, set_clause, where_clause=None):
 @log_time
 def delete(table_data, where_clause=None):
     """Удаляет записи по where_clause"""
+    if not isinstance(table_data, list):
+        print(f"DEBUG: ожидался list получен {type(table_data)}")
+        return []   
     if not table_data:
         print("Таблица пуста")
         return table_data
@@ -207,6 +215,11 @@ def delete(table_data, where_clause=None):
         deleted_count = 0
 
         for row in table_data:
+            if not isinstance(row, dict):
+                print(f"DEBUG: пропускаем некорректную строку {row}")
+                new_data.append(row)
+                continue
+
             match = True
             for key, value in where_clause.items():
                 if key not in row or str(row[key]) != str(value):
@@ -218,5 +231,6 @@ def delete(table_data, where_clause=None):
             else:
                 deleted_count += 1
 
-    print("Удалено записей: {deleted_count")
+    print("Удалено записей: {deleted_count}")
+    print(f"DEBUG: delet возвр-ет {len(new_data)} записей")
     return new_data

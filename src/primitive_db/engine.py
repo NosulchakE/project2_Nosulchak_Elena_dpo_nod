@@ -185,9 +185,12 @@ def run():
                     except ValueError as e:
                         print(f"Ошибка: {e}")
                         continue
-                updated_data = delete(table_name, where_clause)
-                if updated_data is not None:
+                updated_data = delete(table_data, where_clause)
+                print(f"DEBUG: delete вернул {type(updated_data)}")
+                if updated_data is not None and isinstance(updated_data, list):
                     save_table_data(table_name, updated_data)
+                else:
+                    print(f"DEBUG:delete- данные {type(updated_data)})")
 
             else:
                 print(f"Функции '{cmd}' нет. попробуйте снова.")
